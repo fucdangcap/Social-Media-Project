@@ -1,7 +1,9 @@
 import Post from "./Post";
 import connectToDatabase from "@/app/lib/db";
 import PostModel from "@/app/models/Post"; // Đổi tên import để tránh trùng tên Component
+import PostForm from "./PostForm";
 
+export const dynamic = "force-dynamic"; // Buộc trang này luôn là dynamic
 // Hàm lấy dữ liệu từ Database
 async function getPosts() {
   await connectToDatabase();
@@ -34,6 +36,9 @@ export default async function Home() {
       <div className="h-16"></div>
 
       <div className="max-w-lg mx-auto border-x border-gray-100 min-h-screen">
+        {/* Form đăng bài */}
+        <PostForm />
+        
         {/* Nếu chưa có bài nào thì báo */}
         {posts.length === 0 && (
           <p className="text-center text-gray-500 mt-10">Chưa có bài viết nào.</p>
