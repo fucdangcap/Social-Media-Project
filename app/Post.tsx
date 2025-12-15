@@ -1,55 +1,123 @@
+"use client";
+
+import { useRouter }  from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 interface PostProps {
+  id: string;
   content: string;
   author: string;
+  initialLikes?: number;
 }
 
-export default function Post({ content, author }: PostProps) {
+export default function Post({ id, author, content, initialLikes = 0 }: PostProps) {
+  const router = useRouter();
+
+  //State de quan ly so luong like 
+  const [likes, setLikes] = useState(initialLikes);
+  const [isLiked, setIsLiked] = useState(false); //Gia lap Trang thai da like
+  const [isLikeLoading, setIsLikeLoading] = useState(false); //Trang thai dang gui yeu cau like
+
+  // ham xu ly khi bam nut DELETE
+async function handleDelete() {
+  //Hoi lai cho chac
+  if (!confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+  try {
+    //Gui yeu cau xoa bai viet den API
+    await fetch(`/api/posts/${id}`, {
+      method: "DELETE",
+    });
+
+    toast.success("Đã xóa bài viết!");
+    router.refresh(); // Tai lai trang de cap nhat danh sach bai viet
+  } catch (error) {
+    toast.error("Xóa thất bại");
+    console.error(error);
+  }
+}
+
+// ham xu ly khi bam nut LIKE
+async function handleLike() {
+    if (isLikeLoading) return; // Tránh bấm liên tục spam
+    
+    // 1. Cập nhật giao diện NGAY LẬP TỨC (Optimistic UI) cho sướng mắt
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    setLikes((prev) => prev + (newIsLiked ? 1 : 0)); // Tạm thời chỉ làm tính năng tăng like (demo)
+
+    setIsLikeLoading(true);
+
+    try {
+      // 2. Gọi API ngầm bên dưới
+      await fetch(`/api/posts/${id}/like`, { method: "POST" });
+      router.refresh(); // Đồng bộ lại dữ liệu thật
+    } catch (error) {
+      console.error(error);
+      // Nếu lỗi thì hoàn tác lại (tùy chọn)
+      toast.error("Lỗi thả tim");
+    } finally {
+      setIsLikeLoading(false);
+    }
+  }
+
   return (
-    // Container chính: Dạng Flex (ngang), có đường kẻ mờ bên dưới (border-b)
-    <div className="flex gap-4 p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
-      
+    <div className="flex gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
       {/* CỘT TRÁI: Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold">
-          {author[0]}
+        <div className="ư-10 h10 bg-black rounded-full flex items-center justify-center text-white font-bold select-none">
+          {author[0]?.toUpperCase()}
         </div>
       </div>
 
-      {/* CỘT PHẢI: Nội dung */}
-      <div className="flex-1">
-        {/* Header: Tên + Thời gian */}
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-bold text-base text-black">{author}</h3>
-          <span className="text-gray-400 text-sm">2h</span>
+      {/* CỘT PHẢI: Nội dung bài viết */}
+      <div className="flex-1 group"> {/* Thêm class group để xử lý hiệu ứng hover */}
+        <div className="flex items-center justify-betweeen mb-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-base text-black">{author}</h3>
+            <span className="text-gray-400 text-sm">2h</span>"
+          </div>
+
+          {/* Nút xóa, chỉ hiện khi hover vào bài viết */}
+          <button
+            onClick={handleDelete}
+            className="text-gray-400 hover:text-red-600 opacity-0 group-hover: opacity-100 transition-opacity p-1"
+            title="Xóa bài viết"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+          </button>
         </div>
 
-        {/* Nội dung bài viết */}
-        <p className="text-gray-900 text-[15px] leading-snug mb-3">
+        <p className="text-gray-900 text-[15px] leading-snug mb-3 white-space-pre-wrap">
           {content}
         </p>
 
-        {/* Thanh hành động (Action Bar): Like, Comment, Repost, Share */}
-        <div className="flex gap-6">
-          {/* Nút Like */}
-          <button className="group flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-            </svg>
-          </button>
+        {/* Action Bar */}
+        <div className="flex gap-10 text-gray-500">
+          {/* Nút Thích */}
+          <button 
+             onClick={handleLike}
+             className={`flex items-center gap-1.5 transition-colors group/like ${isLiked ? 'text-red-500' : 'hover:text-red-500'}`}
+           >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill={isLiked ? "currentColor" : "none"} // Nếu like rồi thì tô màu (fill), chưa thì rỗng
+                viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" 
+                className={`w-5 h-5 ${isLiked ? 'scale-110' : ''} transition-transform`} // Hiệu ứng phóng to nhẹ khi like
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+              <span className="text-sm">{likes}</span>
+           </button>
 
-          {/* Nút Comment */}
-          <button className="text-gray-500 hover:text-black transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-            </svg>
-          </button>
-
-          {/* Nút Repost */}
-          <button className="text-gray-500 hover:text-black transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" />
-            </svg>
-          </button>
+          {/* Nút Bình luận */}
+          <button className="hover:text-black transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+              </svg>
+           </button>
         </div>
       </div>
     </div>

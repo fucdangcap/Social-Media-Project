@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { set } from "mongoose";
+import toast from "react-hot-toast";
 
 export default function PostForm() {
     const [content, setContent] = useState(""); // Luu noi dung dang go
@@ -26,8 +27,20 @@ export default function PostForm() {
 
             setContent(""); //Xoa o nhap
             router.refresh(); //Lam moi trang de hien thi bai moi
+
+            //Toast thong bao thanh cong
+            toast.success("Đăng bài thành công!", {
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+        },
+      });
+
         } catch (error) {
             console.error("Lỗi đăng bài:", error);
+            //Toast thong bao loi
+            toast.error("Đăng bài thất bại. Vui lòng thử lại.");
         } finally {
             setIsSubmitting(false); //Ket thuc gui
         }

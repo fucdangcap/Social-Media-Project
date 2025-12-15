@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/app/lib/db";
-import Post from "@/app/models/Post";
+import connectToDatabase from "@/lib/db";
+import Post from "@/models/Post";
 
 // Hàm xử lý khi Frontend gửi yêu cầu POST (Đăng bài)
 export async function POST(request: Request) {

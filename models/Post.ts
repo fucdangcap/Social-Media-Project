@@ -10,6 +10,10 @@ const PostSchema = new Schema({
     type: String, 
     required: true // Bắt buộc phải có nội dung
   },
+  likes: {
+    type: Number,
+    default: 0 // Mặc định không có like
+  },
   createdAt: { 
     type: Date, 
     default: Date.now // Mặc định lấy thời gian hiện tại

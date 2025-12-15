@@ -1,6 +1,6 @@
 import Post from "./Post";
-import connectToDatabase from "@/app/lib/db";
-import PostModel from "@/app/models/Post"; // Đổi tên import để tránh trùng tên Component
+import connectToDatabase from "@/lib/db";
+import PostModel from "@/models/Post"; // Đổi tên import để tránh trùng tên Component
 import PostForm from "./PostForm";
 
 export const dynamic = "force-dynamic"; // Buộc trang này luôn là dynamic
@@ -17,6 +17,7 @@ async function getPosts() {
     author: post.author,
     content: post.content,
     // createdAt: post.createdAt.toString() (Tạm chưa dùng)
+    likes: post.likes || 0,
   }));
 }
 
@@ -48,8 +49,10 @@ export default async function Home() {
         {posts.map((post) => (
           <Post 
             key={post.id} 
+            id={post.id}
             author={post.author} 
             content={post.content} 
+            initialLikes={post.likes}
           />
         ))}
       </div>
