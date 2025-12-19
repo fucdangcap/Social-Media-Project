@@ -1,18 +1,22 @@
 "use client";
 
 import { useRouter }  from "next/navigation";
-import { useState } from "react";
+import { use, useState } from "react";
 import toast from "react-hot-toast";
+import { useUser } from "@clerk/nextjs";
 
 interface PostProps {
   id: string;
   content: string;
-  author: string;
+  authorName: string;
+  authorImage: string;
+  authorId: string;
   initialLikes?: number;
 }
 
-export default function Post({ id, author, content, initialLikes = 0 }: PostProps) {
+export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = 0 }: PostProps) {
   const router = useRouter();
+  const { user } = useUser();
 
   //State de quan ly so luong like 
   const [likes, setLikes] = useState(initialLikes);
@@ -41,7 +45,7 @@ async function handleDelete() {
 async function handleLike() {
     if (isLikeLoading) return; // Tránh bấm liên tục spam
     
-    // 1. Cập nhật giao diện NGAY LẬP TỨC (Optimistic UI) cho sướng mắt
+    // 1. Cập nhật giao diện 
     const newIsLiked = !isLiked;
     setIsLiked(newIsLiked);
     setLikes((prev) => prev + (newIsLiked ? 1 : 0)); // Tạm thời chỉ làm tính năng tăng like (demo)
@@ -61,33 +65,35 @@ async function handleLike() {
     }
   }
 
+  const isOwner = user?.id === authorId;
+
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-      {/* CỘT TRÁI: Avatar */}
+      {/* Avatar giữ nguyên */}
       <div className="flex-shrink-0">
-        <div className="ư-10 h10 bg-black rounded-full flex items-center justify-center text-white font-bold select-none">
-          {author[0]?.toUpperCase()}
-        </div>
+        <img src={authorImage} alt={authorName} className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
       </div>
 
       {/* CỘT PHẢI: Nội dung bài viết */}
-      <div className="flex-1 group"> {/* Thêm class group để xử lý hiệu ứng hover */}
-        <div className="flex items-center justify-betweeen mb-1">
+      <div className="flex-1 group">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base text-black">{author}</h3>
-            <span className="text-gray-400 text-sm">2h</span>"
+            <h3 className="font-bold text-base text-black">{authorName}</h3>
+            <span className="text-gray-400 text-sm">Just now</span>
           </div>
 
-          {/* Nút xóa, chỉ hiện khi hover vào bài viết */}
-          <button
-            onClick={handleDelete}
-            className="text-gray-400 hover:text-red-600 opacity-0 group-hover: opacity-100 transition-opacity p-1"
-            title="Xóa bài viết"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-            </svg>
-          </button>
+          {/* CHỈ HIỆN NÚT XÓA NẾU LÀ CHÍNH CHỦ (isOwner) */}
+          {isOwner && (
+            <button 
+              onClick={handleDelete}
+              className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+              title="Xóa bài viết"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          )}
         </div>
 
         <p className="text-gray-900 text-[15px] leading-snug mb-3 white-space-pre-wrap">

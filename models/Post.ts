@@ -2,10 +2,19 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 // Định nghĩa cấu trúc của 1 bài viết
 const PostSchema = new Schema({
-  author: { 
+  authorId: { 
     type: String, 
+    required: true // ID dinh danh
+  },
+  authorName: {
+    type: String,
     required: true // Bắt buộc phải có tên
   },
+  authorImage: {
+    type: String,
+    required: true // Link anh dai dien
+  },
+  
   content: { 
     type: String, 
     required: true // Bắt buộc phải có nội dung
