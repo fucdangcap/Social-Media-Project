@@ -18,7 +18,7 @@ async function getPosts() {
     id: post._id.toString(),
     content: post.content,
     // createdAt: post.createdAt.toString() (Tạm chưa dùng)
-    likes: post.likes || 0,
+    likes: post.likes || [],
     authorName: post.authorName, 
     authorImage: post.authorImage,
     authorId: post.authorId,

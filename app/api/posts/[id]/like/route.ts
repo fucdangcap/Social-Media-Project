@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Post from "@/models/Post";
+import { currentUser } from "@clerk/nextjs/server";
 
 type Props = {
   params: Promise<{
@@ -11,18 +12,40 @@ type Props = {
 // Dùng phương thức POST để thực hiện hành động Like
 export async function POST(request: Request, props: Props) {
   try {
-    const params = await props.params; // Nhớ await params (Next.js 15)
+    // Kiểm tra đăng nhập
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+    }
+
+    const params = await props.params; // Nhớ await params 
     await connectToDatabase();
 
-    // Tìm bài viết và tăng like lên 1 ($inc là lệnh của MongoDB)
-    const updatedPost = await Post.findByIdAndUpdate(
-      params.id,
-      { $inc: { likes: 1 } }, // Tăng likes thêm 1
-      { new: true } // Trả về dữ liệu mới nhất sau khi tăng
-    );
+    // Tìm bài viết 
+    const post = await Post.findById(params.id);
+    if (!post) {
+      return NextResponse.json({ error: "Không tìm thấy bài viết" }, { status: 404 });
+    }
 
-    if (!updatedPost) {
-      return NextResponse.json({ error: "Không tìm thấy bài" }, { status: 404 });
+    //Kiểm tra xem user đã like bài viết chưa
+    const isLiked = post.likes.includes(user.id);
+
+    let updatedPost;
+
+    if (isLiked) {
+      // Nếu đã like thì bỏ like (unlike)
+      updatedPost = await Post.findByIdAndUpdate(
+        params.id,
+        { $pull: { likes: user.id } }, // Xóa user.id khỏi mảng likes
+        { new: true } // Trả về bản cập nhật mới
+      );
+    } else {
+      // Nếu chưa like thì thêm like
+      updatedPost = await Post.findByIdAndUpdate(
+        params.id,
+        { $push: { likes: user.id } }, // Thêm user.id vào mảng likes
+        { new: true } // Trả về bản cập nhật mới
+      );
     }
 
     return NextResponse.json(updatedPost);

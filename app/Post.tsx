@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter }  from "next/navigation";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useUser } from "@clerk/nextjs";
+import { set } from "mongoose";
 
 interface PostProps {
   id: string;
@@ -11,17 +12,24 @@ interface PostProps {
   authorName: string;
   authorImage: string;
   authorId: string;
-  initialLikes?: number;
+  initialLikes: string[]; // Mang chua ID nguoi da like
 }
 
-export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = 0 }: PostProps) {
+export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = [] }: PostProps) {
   const router = useRouter();
   const { user } = useUser();
 
-  //State de quan ly so luong like 
-  const [likes, setLikes] = useState(initialLikes);
-  const [isLiked, setIsLiked] = useState(false); //Gia lap Trang thai da like
-  const [isLikeLoading, setIsLikeLoading] = useState(false); //Trang thai dang gui yeu cau like
+  //State Quan ly giao dien
+  const [likes, setLikes] = useState(initialLikes); // Lưu danh sách like
+  const [isLiked, setIsLiked] = useState(false);//Trang thai tim do/trang 
+
+  //Đồng bộ dữ liệu khi mới tải xong
+  useEffect(() => {
+    setLikes(initialLikes);
+    setIsLiked(user ? initialLikes.includes(user.id) : false);
+  }, [initialLikes, user]);
+
+  const isOwner = user?.id === authorId;
 
   // ham xu ly khi bam nut DELETE
 async function handleDelete() {
@@ -43,29 +51,43 @@ async function handleDelete() {
 
 // ham xu ly khi bam nut LIKE
 async function handleLike() {
-    if (isLikeLoading) return; // Tránh bấm liên tục spam
-    
-    // 1. Cập nhật giao diện 
-    const newIsLiked = !isLiked;
-    setIsLiked(newIsLiked);
-    setLikes((prev) => prev + (newIsLiked ? 1 : 0)); // Tạm thời chỉ làm tính năng tăng like (demo)
+  if (!user) {
+    toast.error("Vui lòng đăng nhập để thích bài viết");
+    return;
+  }
+  //LƯU LẠI TRẠNG THÁI CŨ (Đề phòng lỗi thì quay xe)
+    const previousLikes = [...likes];
+    const previousIsLiked = isLiked;
+  //CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (LẠC QUAN)
+    if (isLiked) {
+      // Nếu đang Like -> Bấm thành Unlike
+      setLikes(likes.filter(userId => userId !== user.id)); // Bỏ ID mình ra
+      setIsLiked(false);
+    } else {
+      // Nếu chưa Like -> Bấm thành Like
+      setLikes([...likes, user.id]); // Thêm ID mình vào
+      setIsLiked(true);
+    }
 
-    setIsLikeLoading(true);
-
+  //GỌI API NGẦM
     try {
-      // 2. Gọi API ngầm bên dưới
-      await fetch(`/api/posts/${id}/like`, { method: "POST" });
-      router.refresh(); // Đồng bộ lại dữ liệu thật
+      const res = await fetch(`/api/posts/${id}/like`, { method: "POST" });
+      
+      if (!res.ok) {
+        throw new Error("Lỗi Server");
+      }
+
+      // Thành công thì refresh ngầm để đồng bộ dữ liệu chuẩn
+      router.refresh(); 
+
     } catch (error) {
+      //NẾU LỖI THÌ HOÀN TÁC (ROLLBACK)
       console.error(error);
-      // Nếu lỗi thì hoàn tác lại (tùy chọn)
-      toast.error("Lỗi thả tim");
-    } finally {
-      setIsLikeLoading(false);
+      setLikes(previousLikes);    // Trả lại số like cũ
+      setIsLiked(previousIsLiked); // Trả lại màu tim cũ
+      toast.error("Lỗi kết nối, không like được!");
     }
   }
-
-  const isOwner = user?.id === authorId;
 
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
@@ -115,7 +137,7 @@ async function handleLike() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
-              <span className="text-sm">{likes}</span>
+              <span className="text-sm">{likes.length > 0 ? likes.length : ''}</span>
            </button>
 
           {/* Nút Bình luận */}

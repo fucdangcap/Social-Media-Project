@@ -20,8 +20,8 @@ const PostSchema = new Schema({
     required: true // Bắt buộc phải có nội dung
   },
   likes: {
-    type: Number,
-    default: 0 // Mặc định không có like
+    type: [String], // Mảng chứa ID của những người đã like bài viết
+    default: [] // Mặc định là mảng rỗng
   },
   createdAt: { 
     type: Date, 
