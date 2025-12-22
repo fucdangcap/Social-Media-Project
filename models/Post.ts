@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import mongoose, { Schema, model, models } from "mongoose";
 
 // Định nghĩa cấu trúc của 1 bài viết
@@ -14,7 +15,6 @@ const PostSchema = new Schema({
     type: String,
     required: true // Link anh dai dien
   },
-  
   content: { 
     type: String, 
     required: true // Bắt buộc phải có nội dung
@@ -23,6 +23,19 @@ const PostSchema = new Schema({
     type: [String], // Mảng chứa ID của những người đã like bài viết
     default: [] // Mặc định là mảng rỗng
   },
+  comment: [
+    {
+      _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
+
+      authorId: String,
+      authorName: String,
+      authorImage: String,
+      content: String,
+
+      replyTo: { type: String, default: null }, // ID của bình luận cha nếu có
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
   createdAt: { 
     type: Date, 
     default: Date.now // Mặc định lấy thời gian hiện tại

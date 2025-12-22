@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter }  from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useUser } from "@clerk/nextjs";
-import { set } from "mongoose";
+import Link from "next/link"; 
 
 interface PostProps {
   id: string;
@@ -13,9 +13,10 @@ interface PostProps {
   authorImage: string;
   authorId: string;
   initialLikes: string[]; // Mang chua ID nguoi da like
+  commentsCount: number; // Tong so binh luan
 }
 
-export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = [] }: PostProps) {
+export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = [], commentsCount = 0 }: PostProps) {
   const router = useRouter();
   const { user } = useUser();
 
@@ -32,33 +33,34 @@ export default function Post({ id, authorName, authorImage, authorId, content, i
   const isOwner = user?.id === authorId;
 
   // ham xu ly khi bam nut DELETE
-async function handleDelete() {
-  //Hoi lai cho chac
-  if (!confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
-  try {
-    //Gui yeu cau xoa bai viet den API
-    await fetch(`/api/posts/${id}`, {
-      method: "DELETE",
-    });
+  async function handleDelete() {
+    //Hoi lai cho chac
+    if (!confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+    try {
+      //Gui yeu cau xoa bai viet den API
+      await fetch(`/api/posts/${id}`, {
+        method: "DELETE",
+      });
 
-    toast.success("Đã xóa bài viết!");
-    router.refresh(); // Tai lai trang de cap nhat danh sach bai viet
-  } catch (error) {
-    toast.error("Xóa thất bại");
-    console.error(error);
+      toast.success("Đã xóa bài viết!");
+      router.refresh(); // Tai lai trang de cap nhat danh sach bai viet
+    } catch (error) {
+      toast.error("Xóa thất bại");
+      console.error(error);
+    }
   }
-}
 
-// ham xu ly khi bam nut LIKE
-async function handleLike() {
-  if (!user) {
-    toast.error("Vui lòng đăng nhập để thích bài viết");
-    return;
-  }
-  //LƯU LẠI TRẠNG THÁI CŨ (Đề phòng lỗi thì quay xe)
+  // ham xu ly khi bam nut LIKE
+  async function handleLike() {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thích bài viết");
+      return;
+    }
+    //LƯU LẠI TRẠNG THÁI CŨ (Đề phòng lỗi thì quay xe)
     const previousLikes = [...likes];
     const previousIsLiked = isLiked;
-  //CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (LẠC QUAN)
+    
+    //CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (LẠC QUAN)
     if (isLiked) {
       // Nếu đang Like -> Bấm thành Unlike
       setLikes(likes.filter(userId => userId !== user.id)); // Bỏ ID mình ra
@@ -69,7 +71,7 @@ async function handleLike() {
       setIsLiked(true);
     }
 
-  //GỌI API NGẦM
+    //GỌI API NGẦM
     try {
       const res = await fetch(`/api/posts/${id}/like`, { method: "POST" });
       
@@ -90,9 +92,9 @@ async function handleLike() {
   }
 
   return (
-    <div className="flex gap-4 p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <div className="flex gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
       {/* Avatar giữ nguyên */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <img src={authorImage} alt={authorName} className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
       </div>
 
@@ -100,7 +102,7 @@ async function handleLike() {
       <div className="flex-1 group">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base text-black">{authorName}</h3>
+            <h3 className="font-bold text-base text-black dark:text-white">{authorName}</h3>
             <span className="text-gray-400 text-sm">Just now</span>
           </div>
 
@@ -118,7 +120,7 @@ async function handleLike() {
           )}
         </div>
 
-        <p className="text-gray-900 text-[15px] leading-snug mb-3 white-space-pre-wrap">
+        <p className="text-gray-900 dark:text-gray-100 text-[15px] leading-snug mb-3 whitespace-pre-wrap">
           {content}
         </p>
 
@@ -141,11 +143,13 @@ async function handleLike() {
            </button>
 
           {/* Nút Bình luận */}
-          <button className="hover:text-black transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-              </svg>
-           </button>
+          <Link href={`/posts/${id}`} className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+            </svg>
+            {/* Hiển thị số lượng comment (chỉ hiện nếu > 0) */}
+            {commentsCount > 0 && <span className="text-sm">{commentsCount}</span>}
+          </Link>
         </div>
       </div>
     </div>

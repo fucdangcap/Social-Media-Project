@@ -2,10 +2,10 @@ import Post from "./Post";
 import connectToDatabase from "@/lib/db";
 import PostModel from "@/models/Post"; // Đổi tên import để tránh trùng tên Component
 import PostForm from "./PostForm";
-import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
-import { Sign } from "crypto";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic"; // Buộc trang này luôn là dynamic
+
 // Hàm lấy dữ liệu từ Database
 async function getPosts() {
   await connectToDatabase();
@@ -17,11 +17,12 @@ async function getPosts() {
   return posts.map((post: any) => ({
     id: post._id.toString(),
     content: post.content,
-    // createdAt: post.createdAt.toString() (Tạm chưa dùng)
+    // createdAt: post.createdAt.toString()
     likes: post.likes || [],
     authorName: post.authorName, 
     authorImage: post.authorImage,
     authorId: post.authorId,
+    commentsCount: post.comments ? post.comments.length : 0,
   }));
 }
 
@@ -31,41 +32,25 @@ export default async function Home() {
   const posts = await getPosts();
 
   return (
-    <div className="min-h-screen bg-white text-black">
-      <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b z-10">
-        <div className="max-w-lg mx-auto p-4 flex justify-between items-center">
-          <h1 className="font-bold text-xl tracking-tighter">ThreadsLite</h1>
-          <div>
-          {/* Truong hop 1: Chua dang nhap */}
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Đăng nhập
-              </button>
-            </SignInButton>
-          </SignedOut>
+    // Thêm dark:bg-gray-950 để đồng bộ nền đen
+    <div className="min-h-screen bg-white text-black dark:bg-gray-950 dark:text-white">
+      
+      {/* Đã xóa Header ở đây vì đã có Navbar trong layout.tsx */}
 
-          {/* Truong hop 2: Da dang nhap */}
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-          </div>
-        </div>
-      </header>
-
-      <div className="h-16"></div>
-
-      <div className="max-w-lg mx-auto border-x border-gray-100 min-h-screen">
-        {/* Form đăng bài */}
+      {/* Cột nội dung chính: Thêm dark:border-gray-800 để viền tối đi */}
+      <div className="max-w-lg mx-auto border-x border-gray-100 dark:border-gray-800 min-h-screen">
+        
+        {/* Form đăng bài (Chỉ hiện khi đã đăng nhập) */}
         <SignedIn>
-        <PostForm />
+          <PostForm />
         </SignedIn>
 
+        {/* Thông báo chưa đăng nhập: Thêm dark:bg-gray-900 dark:text-gray-400 */}
         <SignedOut>
-          <div className="p-4 text-center bg-gray-50 text-gray-500 text-sm">
-          Đăng nhập để viết bài mới bạn nhé!
+          <div className="p-4 text-center bg-gray-50 text-gray-500 text-sm dark:bg-gray-900 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+             Đăng nhập để viết bài mới bạn nhé!
           </div>
-          </SignedOut>
+        </SignedOut>
 
         {/* Nếu chưa có bài nào thì báo */}
         {posts.length === 0 && (
@@ -82,7 +67,8 @@ export default async function Home() {
             authorId={post.authorId}
             content={post.content} 
             initialLikes={post.likes}
-  />
+            commentsCount={post.commentsCount}
+          />
         ))}
       </div>
     </div>
