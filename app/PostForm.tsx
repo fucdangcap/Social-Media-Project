@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export default function PostForm() {
   const [content, setContent] = useState("");
@@ -51,12 +52,14 @@ export default function PostForm() {
     <form onSubmit={handleSubmit} className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 flex gap-4">
       
       {/* Cột trái: Avatar */}
-      <div className="shrink-0">
-        <img 
-            src={user.imageUrl} 
-            alt="User Avatar" 
-            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-        />
+      <div className="flex-shrink-0">
+        <Link href={`/profile/${user.id}`}>
+          <img 
+          src={user.imageUrl} 
+          alt="User Avatar" 
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity"
+          />
+        </Link>
       </div>
 
       {/* Cột phải: Ô nhập liệu + Nút đăng */}
