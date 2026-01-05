@@ -19,7 +19,6 @@ interface PostProps {
 export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = [], commentsCount = 0 }: PostProps) {
   const router = useRouter();
   const { user } = useUser();
-
   //State Quan ly giao dien
   const [likes, setLikes] = useState(initialLikes); // Lưu danh sách like
   const [isLiked, setIsLiked] = useState(false);//Trang thai tim do/trang 
@@ -93,16 +92,20 @@ export default function Post({ id, authorName, authorImage, authorId, content, i
 
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-      {/* Avatar giữ nguyên */}
-      <div className="shrink-0">
-        <img src={authorImage} alt={authorName} className="w-10 h-10 rounded-full object-cover border border-gray-200"/>
-      </div>
+      {/* Avatar bấm vào thì sang trang profile */}
+      <Link href={'/profile/${authorId}'} className="shrink-0">
+        <img src={authorImage} alt={authorName} className="w-10 h-10 rounded-full object-cover border border-gray-200 hover:opacity-80 transition-opacity"/>
+      </Link>
 
       {/* CỘT PHẢI: Nội dung bài viết */}
       <div className="flex-1 group">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base text-black dark:text-white">{authorName}</h3>
+
+            <Link href={`/profile/${authorId}`} className="font-bold text-base text-black dark:text-white hover:underline">
+              {authorName}
+            </Link>
+
             <span className="text-gray-400 text-sm">Just now</span>
           </div>
 
@@ -120,10 +123,11 @@ export default function Post({ id, authorName, authorImage, authorId, content, i
           )}
         </div>
 
-        <p className="text-gray-900 dark:text-gray-100 text-[15px] leading-snug mb-3 whitespace-pre-wrap">
-          {content}
-        </p>
-
+        <Link href={`/posts/${id}`}>
+          <p className="text-gray-900 dark:text-gray-100 text-[15px] leading-snug mb-3 whitespace-pre-wrap">
+            {content}
+          </p>
+        </Link>
         {/* Action Bar */}
         <div className="flex gap-10 text-gray-500">
           {/* Nút Thích */}
