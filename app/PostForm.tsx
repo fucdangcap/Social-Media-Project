@@ -52,7 +52,7 @@ export default function PostForm() {
     <form onSubmit={handleSubmit} className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 flex gap-4">
       
       {/* Cột trái: Avatar */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Link href={`/profile/${user.id}`}>
           <img 
           src={user.imageUrl} 

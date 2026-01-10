@@ -93,7 +93,7 @@ export default function Post({ id, authorName, authorImage, authorId, content, i
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
       {/* Avatar bấm vào thì sang trang profile */}
-      <Link href={`/profile/${authorId}`} className="flex-shrink-0">
+      <Link href={`/profile/${authorId}`} className="shrink-0">
         <img 
         src={authorImage} 
         alt={authorName} 
