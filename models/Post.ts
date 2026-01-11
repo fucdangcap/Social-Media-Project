@@ -23,7 +23,7 @@ const PostSchema = new Schema({
     type: [String], // Mảng chứa ID của những người đã like bài viết
     default: [] // Mặc định là mảng rỗng
   },
-  comment: [
+  comments: [
     {
       _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
 

@@ -18,6 +18,13 @@ export default async function PostDetailPage(props: { params: { id: string } }) 
 
     if (!post) return notFound();
 
+    const serializedComments = (post.comments || []).map((comment: any) => ({
+      content: comment.content,
+      authorName: comment.authorName,
+      authorImage: comment.authorImage,
+      createdAt: comment.createdAt ? comment.createdAt.toString() : "", // Fix lỗi Serialization
+  }));
+
     //Chuyen doi du lieu MongoDB de truyen vao component
     const serializedPost = {
         id: post._id.toString(),
@@ -41,7 +48,7 @@ export default async function PostDetailPage(props: { params: { id: string } }) 
       <div className="px-4">
         <CommentSection 
           postId={serializedPost.id} 
-          initialComments={serializedPost.comments} 
+          comments={serializedComments} 
         />
       </div>
     </div>
