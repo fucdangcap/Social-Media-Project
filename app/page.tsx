@@ -1,7 +1,7 @@
-import Post from "./Post";
+import Post from "../components/Post";
 import connectToDatabase from "@/lib/db";
 import PostModel from "@/models/Post"; // Đổi tên import để tránh trùng tên Component
-import PostForm from "./PostForm";
+import PostForm from "../components/PostForm";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic"; // Buộc trang này luôn là dynamic

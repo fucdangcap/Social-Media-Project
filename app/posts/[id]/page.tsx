@@ -1,7 +1,7 @@
 import connectToDatabase from "@/lib/db";
 import PostModel from "@/models/Post";
-import Post from "@/app/Post";
-import CommentSection from "@/app/CommentSection";
+import Post from "@/components/Post";
+import CommentSection from "@/components/CommentSection";
 import { notFound } from "next/navigation";
 
 // Hàm lấy dữ liệu tu server

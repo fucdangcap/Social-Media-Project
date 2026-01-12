@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast"; // 1. Nhớ import cái này
-import Navbar from "./Navbar"; // 2. Import Navbar
+import Navbar from "../components/Navbar"; // 2. Import Navbar
 
 const inter = Inter({ subsets: ["latin"] });
 
