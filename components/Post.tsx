@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter }  from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation"; // Import thêm usePathname
 import toast from "react-hot-toast";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link"; 
+import LikeButton from "./LikeButton";
 
 interface PostProps {
   id: string;
@@ -12,107 +12,69 @@ interface PostProps {
   authorName: string;
   authorImage: string;
   authorId: string;
-  initialLikes: string[]; // Mang chua ID nguoi da like
-  commentsCount: number; // Tong so binh luan
+  initialLikes: string[]; 
+  commentsCount: number; 
 }
 
 export default function Post({ id, authorName, authorImage, authorId, content, initialLikes = [], commentsCount = 0 }: PostProps) {
   const router = useRouter();
+  const pathname = usePathname(); // Lấy đường dẫn hiện tại
   const { user } = useUser();
-  //State Quan ly giao dien
-  const [likes, setLikes] = useState(initialLikes); // Lưu danh sách like
-  const [isLiked, setIsLiked] = useState(false);//Trang thai tim do/trang 
-
-  //Đồng bộ dữ liệu khi mới tải xong
-  useEffect(() => {
-    setLikes(initialLikes);
-    setIsLiked(user ? initialLikes.includes(user.id) : false);
-  }, [initialLikes, user]);
-
+  
   const isOwner = user?.id === authorId;
 
-  // ham xu ly khi bam nut DELETE
   async function handleDelete() {
-    //Hoi lai cho chac
     if (!confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+    
+    // Toast loading
+    const toastId = toast.loading("Đang xóa...");
+
     try {
-      //Gui yeu cau xoa bai viet den API
-      await fetch(`/api/posts/${id}`, {
+      const res = await fetch(`/api/posts/${id}`, {
         method: "DELETE",
       });
 
-      toast.success("Đã xóa bài viết!");
-      router.refresh(); // Tai lai trang de cap nhat danh sach bai viet
-    } catch (error) {
-      toast.error("Xóa thất bại");
-      console.error(error);
-    }
-  }
+      if (!res.ok) throw new Error("Lỗi xóa bài");
 
-  // ham xu ly khi bam nut LIKE
-  async function handleLike() {
-    if (!user) {
-      toast.error("Vui lòng đăng nhập để thích bài viết");
-      return;
-    }
-    //LƯU LẠI TRẠNG THÁI CŨ (Đề phòng lỗi thì quay xe)
-    const previousLikes = [...likes];
-    const previousIsLiked = isLiked;
-    
-    //CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (LẠC QUAN)
-    if (isLiked) {
-      // Nếu đang Like -> Bấm thành Unlike
-      setLikes(likes.filter(userId => userId !== user.id)); // Bỏ ID mình ra
-      setIsLiked(false);
-    } else {
-      // Nếu chưa Like -> Bấm thành Like
-      setLikes([...likes, user.id]); // Thêm ID mình vào
-      setIsLiked(true);
-    }
+      toast.success("Đã xóa bài viết!", { id: toastId });
 
-    //GỌI API NGẦM
-    try {
-      const res = await fetch(`/api/posts/${id}/like`, { method: "POST" });
-      
-      if (!res.ok) {
-        throw new Error("Lỗi Server");
+      // 👇 LOGIC ĐIỀU HƯỚNG SAU KHI XÓA
+      if (pathname.includes("/posts/")) {
+        // Nếu đang ở trang chi tiết bài viết -> Về trang chủ
+        router.push("/");
+      } else {
+        // Nếu đang ở trang chủ -> Reload lại danh sách
+        router.refresh(); 
       }
-
-      // Thành công thì refresh ngầm để đồng bộ dữ liệu chuẩn
-      router.refresh(); 
-
+      
     } catch (error) {
-      //NẾU LỖI THÌ HOÀN TÁC (ROLLBACK)
+      toast.error("Xóa thất bại", { id: toastId });
       console.error(error);
-      setLikes(previousLikes);    // Trả lại số like cũ
-      setIsLiked(previousIsLiked); // Trả lại màu tim cũ
-      toast.error("Lỗi kết nối, không like được!");
     }
   }
 
   return (
     <div className="flex gap-4 p-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-      {/* Avatar bấm vào thì sang trang profile */}
+      {/* Avatar */}
       <Link href={`/profile/${authorId}`} className="shrink-0">
         <img 
-        src={authorImage} 
-        alt={authorName} 
-        className="w-10 h-10 rounded-full object-cover border border-gray-200 hover:opacity-80 transition-opacity"/>
+          src={authorImage} 
+          alt={authorName} 
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 hover:opacity-80 transition-opacity"
+        />
       </Link>
 
-      {/* CỘT PHẢI: Nội dung bài viết */}
+      {/* Nội dung */}
       <div className="flex-1 group">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-
             <Link href={`/profile/${authorId}`} className="font-bold text-base text-black dark:text-white hover:underline">
               {authorName}
             </Link>
-
-            <span className="text-gray-400 text-sm">Just now</span>
+            <span className="text-gray-400 text-sm">vừa xong</span>
           </div>
 
-          {/* CHỈ HIỆN NÚT XÓA NẾU LÀ CHÍNH CHỦ (isOwner) */}
+          {/* Nút Xóa */}
           {isOwner && (
             <button 
               onClick={handleDelete}
@@ -131,30 +93,19 @@ export default function Post({ id, authorName, authorImage, authorId, content, i
             {content}
           </p>
         </Link>
-        {/* Action Bar */}
+        
         <div className="flex gap-10 text-gray-500">
-          {/* Nút Thích */}
-          <button 
-             onClick={handleLike}
-             className={`flex items-center gap-1.5 transition-colors group/like ${isLiked ? 'text-red-500' : 'hover:text-red-500'}`}
-           >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill={isLiked ? "currentColor" : "none"} // Nếu like rồi thì tô màu (fill), chưa thì rỗng
-                viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" 
-                className={`w-5 h-5 ${isLiked ? 'scale-110' : ''} transition-transform`} // Hiệu ứng phóng to nhẹ khi like
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-              </svg>
-              <span className="text-sm">{likes.length > 0 ? likes.length : ''}</span>
-           </button>
+          {/* Nút Like */}
+          <LikeButton 
+            postId={id} 
+            initialLikes={initialLikes} 
+          />
 
-          {/* Nút Bình luận */}
+          {/* Nút Comment */}
           <Link href={`/posts/${id}`} className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
             </svg>
-            {/* Hiển thị số lượng comment (chỉ hiện nếu > 0) */}
             {commentsCount > 0 && <span className="text-sm">{commentsCount}</span>}
           </Link>
         </div>

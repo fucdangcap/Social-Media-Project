@@ -50,7 +50,6 @@ export default function ProfileHeader({ user, currentUserId, isFollowing, follow
                         className="w-20 h-20 rounded-full border border-gray-200 dark:border-gray-700 object-cover"
                     />
 
-                    {/* Logic hiển thị nút: Nếu là chính chủ -> Hiện nút Edit. Nếu là khách -> Hiện nút Follow */}
                     {isOwner ? (
                         <button 
                             onClick={() => setIsEditOpen(true)}
@@ -64,7 +63,7 @@ export default function ProfileHeader({ user, currentUserId, isFollowing, follow
                 </div>
             </div>
 
-            {/* Modal nằm chờ ở đây, khi nào biến isEditOpen = true thì nó hiện lên */}
+        
             {isOwner && (
                 <EditProfileModal 
                     user={user} 

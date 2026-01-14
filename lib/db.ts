@@ -8,8 +8,6 @@ if (!MONGODB_URI) {
   );
 }
 
-// Vì Next.js chạy serverless, chúng ta cần cache lại kết nối
-// để tránh việc tạo quá nhiều kết nối mỗi khi f5 trang web
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -27,7 +25,7 @@ async function connectToDatabase() {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      console.log("🔥 ĐÃ KẾT NỐI THÀNH CÔNG VỚI MONGODB! 🔥"); // Dòng này sẽ hiện ra
+      console.log("🔥 ĐÃ KẾT NỐI THÀNH CÔNG VỚI MONGODB! 🔥"); 
       return mongoose;
     });
   }

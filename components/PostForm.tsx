@@ -48,7 +48,7 @@ export default function PostForm() {
   if (!user) return null;
 
   return (
-    // 1. SỬA CONTAINER: Thêm bg-white dark:bg-gray-950 và viền tối dark:border-gray-800
+    
     <form onSubmit={handleSubmit} className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 flex gap-4">
       
       {/* Cột trái: Avatar */}
@@ -68,7 +68,7 @@ export default function PostForm() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Có gì mới không?"
-          // 2. SỬA TEXTAREA: Thêm bg-transparent, text-black và dark:text-white
+          
           className="w-full h-24 p-2 outline-none resize-none placeholder-gray-400 text-base bg-transparent text-black dark:text-white"
           disabled={isLoading}
         />
@@ -77,7 +77,7 @@ export default function PostForm() {
           <button
             type="submit"
             disabled={isLoading || !content.trim()}
-            // 3. SỬA NÚT BẤM: Thêm dark:bg-white dark:text-black (đảo màu cho nổi)
+            
             className={`
               px-5 py-2 rounded-full font-bold text-sm transition-all
               ${isLoading || !content.trim() 

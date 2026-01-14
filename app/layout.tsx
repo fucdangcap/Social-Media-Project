@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "react-hot-toast"; // 1. Nhớ import cái này
-import Navbar from "../components/Navbar"; // 2. Import Navbar
+import { Toaster } from "react-hot-toast"; 
+import Navbar from "../components/Navbar"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,7 +30,7 @@ export default function RootLayout({
           <Toaster position="bottom-left" />
 
           {/* 3. Nội dung chính của trang web */}
-          <main className="max-w-2xl mx-auto min-h-screen">
+          <main className="pt-20 max-w-2xl mx-auto min-h-screen">
             {children}
           </main>
           

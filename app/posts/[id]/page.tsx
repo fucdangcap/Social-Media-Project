@@ -1,54 +1,50 @@
 import connectToDatabase from "@/lib/db";
 import PostModel from "@/models/Post";
 import Post from "@/components/Post";
-import CommentSection from "@/components/CommentSection";
 import { notFound } from "next/navigation";
-
-// Hàm lấy dữ liệu tu server
-async function getPost(id: String) {
-    await connectToDatabase();
-    const post = await PostModel.findById(id).lean();
-    if (!post) return null;
-    return post;
+import CommentSection from "@/components/CommentSection";
+// Định nghĩa kiểu params cho Next.js 15
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-export default async function PostDetailPage(props: { params: { id: string } }) {
-    const params = await props.params;
-    const post = await getPost(params.id);
+export default async function PostDetailPage(props: Props) {
+  // 1. Xử lý Params (Next.js 15 bắt buộc phải await)
+  const params = await props.params;
+  
+  // Kiểm tra an toàn: Nếu không có ID thì chặn luôn
+  if (!params?.id) return notFound();
 
-    if (!post) return notFound();
+  await connectToDatabase();
 
-    const serializedComments = (post.comments || []).map((comment: any) => ({
-      content: comment.content,
-      authorName: comment.authorName,
-      authorImage: comment.authorImage,
-      createdAt: comment.createdAt ? comment.createdAt.toString() : "", // Fix lỗi Serialization
-  }));
+  // 2. Lấy dữ liệu thô
+  const postRaw = await PostModel.findById(params.id).lean();
 
-    //Chuyen doi du lieu MongoDB de truyen vao component
-    const serializedPost = {
-        id: post._id.toString(),
-        content: post.content,
-        authorName: post.authorName,
-        authorImage: post.authorImage,
-        authorId: post.authorId,
-        likes: post.likes || [],
-        comments: post.comments || [],
-        commentsCount: post.comments ? post.comments.length : 0,
-    };
-    return (
-    <div className="max-w-lg mx-auto border-x border-gray-100 dark:border-gray-800 min-h-screen pt-20 pb-10 bg-white dark:bg-gray-950">
-      {/* 1. Hiển thị nội dung bài viết chính */}
+  if (!postRaw) return notFound();
+
+  // 🔥 3. BIỆN PHÁP MẠNH: "Luộc chín" toàn bộ dữ liệu
+  // Lệnh này biến mọi thứ (ObjectId, Date,...) thành String/JSON thuần túy
+  // Đảm bảo React không bao giờ báo lỗi "Only plain objects..." nữa
+  const post = JSON.parse(JSON.stringify(postRaw));
+
+  return (
+    <div className="max-w-lg mx-auto border-x border-gray-100 dark:border-gray-800 min-h-screen pt-20 pb-10 bg-white dark:bg-black">
+      {/* 4. Truyền dữ liệu vào (Mapping rõ ràng từng cái cho chắc ăn) */}
       <Post 
-        {...serializedPost} 
-        initialLikes={serializedPost.likes} 
+        id={post._id}
+        content={post.content}
+        authorName={post.authorName || "Anonymous"}
+        authorImage={post.authorImage || "/no-avatar.png"}
+        authorId={post.authorId}
+        initialLikes={post.likes || []}
+        commentsCount={post.comments?.length || 0}
       />
-
-      {/* 2. Hiển thị khu vực bình luận bên dưới */}
+      {/* 5. Phần bình luận */}
       <div className="px-4">
         <CommentSection 
-          postId={serializedPost.id} 
-          comments={serializedComments} 
+            postId={post._id}
+            comments={post.comments || []}
+            postAuthorId={post.authorId}
         />
       </div>
     </div>

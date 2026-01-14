@@ -29,11 +29,11 @@ export default function FollowButton({ targetUserId, initialIsFollowing }: Follo
           throw new Error("Lỗi khi follow");
       }
 
-      router.refresh(); // F5 nhẹ để cập nhật số lượng follower nếu có
+      router.refresh();
       toast.success(previousState ? "Đã bỏ theo dõi" : "Đã theo dõi");
       
     } catch (error) {
-      setIsFollowing(previousState); // Hoàn tác nếu lỗi
+      setIsFollowing(previousState); 
       toast.error("Có lỗi xảy ra");
     } finally {
       setIsLoading(false);
@@ -47,8 +47,8 @@ export default function FollowButton({ targetUserId, initialIsFollowing }: Follo
       className={`
         px-6 py-2 rounded-lg font-semibold text-sm transition-all border
         ${isFollowing 
-            ? "bg-white text-black border-gray-300 hover:bg-gray-100 dark:bg-black dark:text-white dark:border-gray-700" // Style khi Đã Follow (Nút trắng/đen)
-            : "bg-black text-white border-transparent hover:bg-gray-800 dark:bg-white dark:text-black" // Style khi Chưa Follow (Nút đen/trắng nổi bật)
+            ? "bg-white text-black border-gray-300 hover:bg-gray-100 dark:bg-black dark:text-white dark:border-gray-700" 
+            : "bg-black text-white border-transparent hover:bg-gray-800 dark:bg-white dark:text-black" 
         }
       `}
     >

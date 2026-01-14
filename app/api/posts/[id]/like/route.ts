@@ -1,78 +1,50 @@
-import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Post from "@/models/Post";
-import Notification from "@/models/Notification";
+import Notification from "@/models/Notification"; // 👈 Import cái này
 import { currentUser } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { pusherServer } from "@/lib/pusher";
 
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-// Dùng phương thức POST để thực hiện hành động Like
-export async function POST(request: Request, props: Props) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
   try {
-    // Kiểm tra đăng nhập
+    const params = await props.params;
     const user = await currentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const params = await props.params; 
     await connectToDatabase();
-
-    // Tìm bài viết 
     const post = await Post.findById(params.id);
-    if (!post) {
-      return NextResponse.json({ error: "Không tìm thấy bài viết" }, { status: 404 });
-    }
+    if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    //Kiểm tra xem user đã like bài viết chưa
     const isLiked = post.likes.includes(user.id);
 
-    let updatedPost;
-
     if (isLiked) {
-      // Nếu đã like thì bỏ like (unlike)
-      updatedPost = await Post.findByIdAndUpdate(
-        params.id,
-        { $pull: { likes: user.id } }, // Xóa user.id khỏi mảng likes
-        { new: true } // Trả về bản cập nhật mới
-      );
-
-      await Notification.findOneAndDelete({
-        recipientId: post.authorId,
-        senderId: user.id,
-        type: "like",
-        postId: params.id,
-      });
-      
+      post.likes = post.likes.filter((id: string) => id !== user.id);
+      // (Optional) Nếu muốn xóa thông báo khi bỏ like thì thêm code xóa ở đây
     } else {
-      // Nếu chưa like thì thêm like
-      updatedPost = await Post.findByIdAndUpdate(
-        params.id,
-        { $push: { likes: user.id } }, // Thêm user.id vào mảng likes
-        { new: true } // Trả về bản cập nhật mới
-      );
-    
-    // Tạo thông báo nếu là like
-    if(post.authorId !== user.id && !isLiked) {
-      await Notification.create({
-        recipientId: post.authorId,
-        senderId: user.id,
-        senderName: user.firstName || user.username || "Someone",
-        senderImg: user.imageUrl,
-        type: "like",
-        postId: params.id,
-        read: false,
-      });
-    }
-  }
+      post.likes.push(user.id);
 
-    return NextResponse.json(updatedPost);
+      // 🔥 LƯU THÔNG BÁO VÀO DB (Chỉ khi không tự like bài mình)
+      if (post.authorId !== user.id) {
+        await Notification.create({
+          recipientId: post.authorId,
+          actorId: user.id,
+          actorName: user.firstName || "Ai đó",
+          actorImage: user.imageUrl,
+          type: "like",
+          postId: post._id,
+          message: `đã thích bài viết của bạn.`,
+        });
+
+        // Bắn Pusher báo hiệu (Giữ nguyên)
+        await pusherServer.trigger(`user_${post.authorId}`, "new-notification", { hasNotification: true });
+      }
+    }
+
+    await post.save();
+    await pusherServer.trigger(`post_${params.id}`, "update-likes", { likes: post.likes });
+
+    return NextResponse.json({ success: true, likes: post.likes });
   } catch (error) {
-    console.error("Like error:", error); // Ghi log lỗi chi tiết
-    return NextResponse.json({ error: "Lỗi like: " + error }, { status: 500 });
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
