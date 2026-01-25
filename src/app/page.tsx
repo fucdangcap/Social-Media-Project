@@ -5,6 +5,9 @@ import LoadMorePosts from "@/components/LoadMorePosts"; // 👈 Component mới
 import { serializeData } from "@/lib/utils";
 import { IPost } from "@/types";
 
+// ✅ FIX: Revalidate cache mỗi 10 giây để tránh hiển thị data cũ trên production
+export const revalidate = 10;
+
 export default async function Home() {
   await connectToDatabase();
 

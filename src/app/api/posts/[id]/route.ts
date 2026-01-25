@@ -3,6 +3,7 @@ import Post from "@/models/Post";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { cache } from "@/lib/cache";
+import { revalidatePath } from "next/cache";
 
 // Hàm xử lý lệnh DELETE (Xóa bài)
 export async function DELETE(
@@ -34,7 +35,10 @@ export async function DELETE(
     // 4. Xóa bài viết
     await Post.findByIdAndDelete(params.id);
     
+    // ✅ FIX: Clear cache và revalidate Next.js cache
     cache.deletePattern('posts_page_*');
+    revalidatePath('/'); // Revalidate trang chủ
+    revalidatePath(`/posts/${params.id}`); // Revalidate trang chi tiết
 
     // 5. Trả về thành công
     return NextResponse.json({ success: true, message: "Đã xóa thành công" });
