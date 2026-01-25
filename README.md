@@ -14,3 +14,6 @@ Một mạng xã hội tối giản được xây dựng với Next.js 15.
    ```bash
    npm install
    npm run dev
+
+## Link deploy social web:
+https://social-media-project-theta-ten.vercel.app/
