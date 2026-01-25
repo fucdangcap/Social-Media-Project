@@ -12,7 +12,9 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectToDatabase();
-    const post = await Post.findById(params.id);
+    
+    // ✅ OPTIMIZE: Chỉ select likes và authorId thay vì load toàn bộ post
+    const post = await Post.findById(params.id).select('likes authorId');
     if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const isLiked = post.likes.includes(user.id);

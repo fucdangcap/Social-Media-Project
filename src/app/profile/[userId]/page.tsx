@@ -20,7 +20,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
   }
 
   await connectToDatabase();
-  const posts = await PostModel.find({ authorId: userId }).sort({ createdAt: -1 });
+  
+  const posts = await PostModel.find({ authorId: userId })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .select('_id content authorId authorName authorImage likes comments createdAt')
+    .lean();
 
   let isFollowing = false;
   if (currentUserId && currentUserId !== userId) {
@@ -31,7 +36,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
     isFollowing = !!follow;
   }
 
-  // Đếm số lượng Follower / Following (Tạm thời đếm sơ sơ)
+  // Đếm số lượng Follower / Following
   const followersCount = await FollowModel.countDocuments({ followingId: userId });
   const followingCount = await FollowModel.countDocuments({ followerId: userId });
 
@@ -72,12 +77,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
         <div className="flex font-bold text-sm text-center border-b border-gray-200 dark:border-gray-800">
             <div className="flex-1 py-4 border-b-2 border-black dark:border-white text-black dark:text-white cursor-pointer">
                 Threads
-            </div>
-            <div className="flex-1 py-4 text-gray-500 cursor-not-allowed">
-                Replies
-            </div>
-            <div className="flex-1 py-4 text-gray-500 cursor-not-allowed">
-                Reposts
             </div>
         </div>
 

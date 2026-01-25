@@ -4,6 +4,7 @@ import Notification from "@/models/Notification";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { pusherServer } from "@/lib/pusher";
+import { isRateLimited } from "@/lib/rateLimit"; // ✅ Import
 import mongoose from "mongoose";
 
 export async function POST(
@@ -15,6 +16,14 @@ export async function POST(
     const user = await currentUser();
 
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+    // ✅ RATE LIMIT: Chống spam comment (20 comment/phút)
+    if (isRateLimited(`comment_${user.id}`, 20, 60 * 1000)) {
+      return NextResponse.json(
+        { error: "Bình luận quá nhanh! Chờ chút nhé." },
+        { status: 429 }
+      );
+    }
 
     const body = await req.json();
     if (!body.content) return NextResponse.json({ error: "Empty content" }, { status: 400 });

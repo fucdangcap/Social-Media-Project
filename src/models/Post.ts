@@ -11,7 +11,8 @@ const CommentSchema = new Schema({
 const PostSchema = new Schema({
   authorId: { 
     type: String, 
-    required: true 
+    required: true,
+    index: true 
   },
   authorName: {
     type: String,
@@ -33,9 +34,13 @@ const PostSchema = new Schema({
   
   createdAt: { 
     type: Date, 
-    default: Date.now 
+    default: Date.now,
+    index: -1
   }
 });
+
+
+PostSchema.index({ authorId: 1, createdAt: -1 });
 
 const Post = models.Post || model("Post", PostSchema);
 

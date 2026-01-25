@@ -10,10 +10,12 @@ export async function GET() {
 
     await connectToDatabase();
 
-    // Lấy thông báo gửi cho mình, sắp xếp mới nhất lên đầu
+    // ✅ OPTIMIZE: Chỉ select fields cần thiết + giới hạn 20 items
     const notifications = await Notification.find({ recipientId: user.id })
+      .select('actorId actorName actorImage type message postId createdAt isRead')
       .sort({ createdAt: -1 })
-      .limit(20); // Lấy 20 cái mới nhất thôi cho nhẹ
+      .limit(20)
+      .lean(); // Lấy plain object thay vì Mongoose document
 
     return NextResponse.json(notifications);
   } catch (error) {
