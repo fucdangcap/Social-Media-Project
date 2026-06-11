@@ -23,10 +23,7 @@ Một nền tảng mạng xã hội hiện đại, được xây dựng với Ne
 
 ### Development Tools
 - **ESLint** - Code linting
-- **PostCSS 8** - CSS processing
-- **Autoprefixer** - CSS vendor prefixes
-- **date-fns** - Date utilities
-- **clsx** - Conditional className utilities
+- **TypeScript 5** - Type safety
 
 ## 🚀 Cách chạy dự án
 
